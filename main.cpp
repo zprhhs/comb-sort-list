@@ -1,76 +1,61 @@
-#include <iostream>
-#include <bitset>
-#include <algorithm>
-#include <string>
-using namespace std;
-const int size = 1000;
-bitset<size> tot;
-int pos_h, pos_t;
-int m=3, b=20;
-int f[100][100];
-void init() {
-    for(int i = 0; i <= 99; i++) {
-        f[i][i] = f[i][0]=1;
-    }
-    for(int i = 1; i <= 99; i++)
-        for(int j = 1; j < i; j++)
-            f[i][j] = f[i-1][j] + f[i-1][j-1];
-}
-void change(int bar) {
-    int last = 0;
-    int mid = 0;
-    bool flag_mid= false;
-    bool flag_begin = false;
-    int cnt = 0;
-    // cout << bar << " " << pos_h << endl;
-    for (int i = 0; i < pos_h; i++) {
-        if (tot[i]) flag_begin = true;
-        if (tot[i] == 0) cnt++;
-        if (tot[i] == 0 and flag_begin) {
-            for (int j = 1; j <= cnt; j++) tot[i-j] = 0;
-            for (int j = cnt+1; i-j >= 0; j++) tot[i-j] = 1;
-            tot[i] = 1;
-            return;
-        }
-    }
-    tot.reset();
-    for (int i = 0; i < bar-1; i++) tot.set(i);
-    tot.set(pos_h);
-    pos_h++;
-}
+#include <ctime>
+#include <cstdio>
+#include <cstring>
 
+const int size = 50;
+bool tot[size];
+int pos_h;
+int m, b;
 
 int main() 
 {
-    init();
-    ios::sync_with_stdio(false);
-    cout << "input m b:";
-    cin >> m >> b;
-    freopen("out.txt", "w" ,stdout);	
+    clock_t startTime = clock();
+    m = 10;
+    b = 20;
+    int ans = 0;
     int bar = m - 1;
     pos_h = bar;
+    bool flag_begin = false;
     int cnt = 0;
-    for (int i = 0; i < bar; i++) tot.set(i);
+    bool swap = false;
+    memset(tot, true, sizeof(bool)*bar);
     while (true) {
-        // cout << tot << endl;
-        string tmp = tot.to_string();
-        reverse(tmp.begin(), tmp.end());
-        // cout << tmp << endl;
-        int last_pos = 0;
+        int last_pos = -(tot[0]==false);
         for (int j = 0; j < m+b-1; j++) {
-            if(tmp[j] == '1') {
-                if (last_pos == 0 and tmp[0] == '0') last_pos--;
-                cout << max(0, j - last_pos - 1) << " ";
+            if(tot[j]) {
+                int t = j - last_pos - 1;
+                if (not j) t = t>0?t:0;
+                printf("%d ", t);
                 last_pos = j;
             }
         }
-        cout << m+b-last_pos-2 << endl;
-        cnt++;
-        change(bar);
+        printf("%d\n", m+b-last_pos-2);
+        ans++;
+
+        flag_begin = false;
+        cnt = 0;
+        swap = false;
+        for (int i = 0; i < pos_h; i++) {
+            if (not flag_begin and tot[i]) flag_begin = true;
+            if (not tot[i]) cnt++;
+            if (not tot[i] and flag_begin) {
+                if (i - cnt - 1 >= 0) memset(tot, true, sizeof(bool)*(i-cnt));
+                memset(tot+i-cnt, false, cnt*sizeof(bool));
+                tot[i] = 1;
+                swap = true;
+                break;
+            }
+        }
+        if (swap) continue;
+        memset(tot, true, sizeof(bool)*(bar-1));
+        memset(tot+bar-1, false, sizeof(bool)*(pos_h-bar+1));
+        tot[pos_h] = true; 
+        pos_h++;
+
         if (tot[m+b-1]) break;
     }
-    int ans = f[m+b-1][m-1];
-    cout << "cal with comb is: " << ans <<endl;
-    cout << "list length is: " << cnt << endl;
+    printf("list length is: %d\n", ans);
+    clock_t endTime = clock();
+    printf("%f\n", double(endTime - startTime));
     return 0;
 }
